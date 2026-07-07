@@ -1,0 +1,30 @@
+# Optional: run a local Postgres instance for production-parity testing.
+#
+# Usage:
+#   1. docker compose up -d
+#   2. In prisma/schema.prisma, change the datasource provider to "postgresql"
+#   3. In .env, set DATABASE_URL="postgresql://career:career@localhost:5432/career_navigator"
+#   4. npx prisma db push
+#
+# The app defaults to SQLite (no Docker required) so this file is opt-in.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: career
+      POSTGRES_PASSWORD: career
+      POSTGRES_DB: career_navigator
+    ports:
+      - "5432:5432"
+    volumes:
+      - career_navigator_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U career"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  career_navigator_pgdata:
