@@ -1,9 +1,19 @@
+// AI Career Navigator — database schema
+//
+// This is the MVP slice: authentication + user profile. It's written so it
+// grows cleanly into the fuller platform (resumes, applications, jobs, etc.)
+// without renaming or restructuring existing fields.
+//
+// Datasource: SQLite for zero-config local development. Swap the provider to
+// "postgresql" and point DATABASE_URL at a real Postgres instance for
+// production — every model below is already Postgres-safe.
+
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "postgresql" // change to "postgresql" for production
   url      = env("DATABASE_URL")
 }
 
@@ -16,34 +26,36 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  profile  Profile?
+  profile Profile?
+
   sessions Session[]
 }
 
 model Profile {
-  id          String   @id @default(cuid())
-  userId      String   @unique
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  title       String?
-  location    String?
-  bio         String?
-  skillsJson  String   @default("[]")
-  avatarUrl   String?
-  websiteUrl  String?
-  githubUrl   String?
-  linkedinUrl String?
+  title         String? // e.g. "Frontend Engineer"
+  location      String?
+  bio           String? // short professional summary
+  skillsJson    String   @default("[]") // JSON-encoded string[] of skills
+  avatarUrl     String?
+  websiteUrl    String?
+  githubUrl     String?
+  linkedinUrl   String?
 
-  careerScore Int      @default(0)
+  careerScore   Int      @default(0) // 0-100, computed from profile completeness for now
 
-  updatedAt   DateTime @updatedAt
+  updatedAt     DateTime @updatedAt
 }
 
+// Refresh-token backed sessions so we can support "active sessions" /
+// "device management" later without changing the auth flow.
 model Session {
   id           String   @id @default(cuid())
   userId       String
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
   refreshToken String   @unique
   userAgent    String?
   createdAt    DateTime @default(now())
